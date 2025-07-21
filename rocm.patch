@@ -1,0 +1,93 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index edc64f877..842782834 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -18,6 +18,10 @@ set(VLLM_TARGET_DEVICE "cuda" CACHE STRING "Target device backend for vLLM")
+ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+ message(STATUS "Target device: ${VLLM_TARGET_DEVICE}")
+ 
++
++# now hip::amdhip64, hip::host, etc. exist
++#find_package(Torch REQUIRED COMPONENTS c10_hip)
++
+ include(${CMAKE_CURRENT_LIST_DIR}/cmake/utils.cmake)
+ 
+ # Suppress potential warnings about unused manually-specified variables
+@@ -77,6 +81,20 @@ endif()
+ # so there is no need to do this explicitly with check_language/enable_language,
+ # etc.
+ #
++# force CMake to load hip's own config file
++find_package(hip CONFIG REQUIRED)
++find_package(hiprtc CONFIG REQUIRED)
++find_package(hipblas CONFIG REQUIRED)
++find_package(rocblas CONFIG REQUIRED)
++find_package(hipfft  CONFIG REQUIRED)
++find_package(hiprand  CONFIG REQUIRED)
++find_package(hipsparse  CONFIG REQUIRED)
++find_package(hipsparse  CONFIG REQUIRED)
++find_package(hipsolver  CONFIG REQUIRED)
++find_package(hipblaslt  CONFIG REQUIRED)
++
++
++# now hip::amdhip64, hip::host, etc. exist
+ find_package(Torch REQUIRED)
+ 
+ # Supported NVIDIA architectures.
+@@ -105,31 +123,31 @@ endif()
+ # Set up GPU language and check the torch version and warn if it isn't
+ # what is expected.
+ #
+-if (NOT HIP_FOUND AND CUDA_FOUND)
+-  set(VLLM_GPU_LANG "CUDA")
+-
+-  if (NOT Torch_VERSION VERSION_EQUAL ${TORCH_SUPPORTED_VERSION_CUDA})
+-    message(WARNING "Pytorch version ${TORCH_SUPPORTED_VERSION_CUDA} "
+-      "expected for CUDA build, saw ${Torch_VERSION} instead.")
+-  endif()
+-elseif(HIP_FOUND)
+-  set(VLLM_GPU_LANG "HIP")
+-
+-  # Importing torch recognizes and sets up some HIP/ROCm configuration but does
+-  # not let cmake recognize .hip files. In order to get cmake to understand the
+-  # .hip extension automatically, HIP must be enabled explicitly.
+-  enable_language(HIP)
+-
+-  # ROCm 5.X and 6.X
+-  if (ROCM_VERSION_DEV_MAJOR GREATER_EQUAL 5 AND
+-      NOT Torch_VERSION VERSION_EQUAL ${TORCH_SUPPORTED_VERSION_ROCM})
+-    message(WARNING "Pytorch version >= ${TORCH_SUPPORTED_VERSION_ROCM} "
+-      "expected for ROCm build, saw ${Torch_VERSION} instead.")
+-  endif()
+-else()
+-  message(FATAL_ERROR "Can't find CUDA or HIP installation.")
+-endif()
+-
++# if (NOT HIP_FOUND AND CUDA_FOUND)
++#   set(VLLM_GPU_LANG "CUDA")
++# 
++#   if (NOT Torch_VERSION VERSION_EQUAL ${TORCH_SUPPORTED_VERSION_CUDA})
++#     message(WARNING "Pytorch version ${TORCH_SUPPORTED_VERSION_CUDA} "
++#       "expected for CUDA build, saw ${Torch_VERSION} instead.")
++#   endif()
++# elseif(HIP_FOUND)
++#   set(VLLM_GPU_LANG "HIP")
++# 
++#   # Importing torch recognizes and sets up some HIP/ROCm configuration but does
++#   # not let cmake recognize .hip files. In order to get cmake to understand the
++#   # .hip extension automatically, HIP must be enabled explicitly.
++#   enable_language(HIP)
++# 
++#   # ROCm 5.X and 6.X
++#   if (ROCM_VERSION_DEV_MAJOR GREATER_EQUAL 5 AND
++#       NOT Torch_VERSION VERSION_EQUAL ${TORCH_SUPPORTED_VERSION_ROCM})
++#     message(WARNING "Pytorch version >= ${TORCH_SUPPORTED_VERSION_ROCM} "
++#       "expected for ROCm build, saw ${Torch_VERSION} instead.")
++#   endif()
++# else()
++#   message(FATAL_ERROR "Can't find CUDA or HIP installation.")
++# endif()
++set(VLLM_GPU_LANG "HIP")
+ 
+ if(VLLM_GPU_LANG STREQUAL "CUDA")
+   #
